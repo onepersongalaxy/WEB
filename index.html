@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YouTube Premium - Neptune Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root {
+      --yt-red: #ff0033;
+      --yt-glow: rgba(255, 0, 51, 0.45);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.16);
+      --glass-specular: linear-gradient(135deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.03) 60%, rgba(255, 255, 255, 0.1) 100%);
+      --text-main: #f8fafc;
+      --text-dim: #94a3b8;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: #05060b;
+      color: var(--text-main);
+      overflow-x: hidden;
+      min-height: 100vh;
+      position: relative;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+    }
+
+    /* 60FPS Fluid Liquid Canvas Engine */
+    #liquid-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+      filter: blur(42px) saturate(160%);
+      opacity: 0.85;
+      transform: translateZ(0);
+      will-change: transform;
+    }
+
+    .ambient-glow {
+      position: fixed;
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle, var(--yt-glow) 0%, transparent 70%);
+      top: -160px;
+      left: -160px;
+      border-radius: 50%;
+      z-index: -1;
+      pointer-events: none;
+      animation: pulse 8s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+      will-change: transform;
+      transform: translateZ(0);
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1) translate3d(0, 0, 0); }
+      100% { transform: scale(1.25) translate3d(40px, 40px, 0); }
+    }
+
+    /* Hardware Accelerated Liquid Glass */
+    .liquid-glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      box-shadow: 
+        0 30px 60px -12px rgba(0, 0, 0, 0.55),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -2px 8px 0 rgba(0, 0, 0, 0.35);
+      position: relative;
+      transform: translate3d(0, 0, 0);
+      will-change: transform, opacity;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+    }
+
+    .liquid-glass::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--glass-specular);
+      pointer-events: none;
+      border-radius: inherit;
+    }
+
+    /* Lazy Component Reveal Animation */
+    .lazy-reveal {
+      opacity: 0;
+      transform: translate3d(0, 45px, 0);
+      transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+      content-visibility: auto;
+      contain-intrinsic-size: 500px;
+    }
+
+    .lazy-reveal.revealed {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Header */
+    header {
+      padding: 30px 0;
+    }
+
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+    }
+
+    .brand-logo-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .yt-icon-logo {
+      font-size: 38px;
+      color: var(--yt-red);
+      filter: drop-shadow(0 0 18px rgba(255, 0, 51, 0.75));
+    }
+
+    .brand-names {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-names .yt-title {
+      font-weight: 900;
+      font-size: 22px;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+
+    .brand-names .yt-premium-badge {
+      font-size: 11px;
+      letter-spacing: 2.5px;
+      font-weight: 700;
+      color: #ff4757;
+      text-transform: uppercase;
+    }
+
+    .style-pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .style-dot {
+      width: 7px;
+      height: 7px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #10b981;
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      padding: 60px 0 80px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .hero h1 {
+      font-size: clamp(34px, 5.5vw, 68px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, #fff 30%, #ff6b81 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-slogan {
+      font-size: clamp(17px, 2.4vw, 24px);
+      color: var(--text-dim);
+      max-width: 750px;
+      margin: 0 auto 36px;
+      line-height: 1.5;
+      font-weight: 400;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    /* Glass Buttons */
+    .btn-liquid {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px 36px;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: 700;
+      text-decoration: none;
+      color: #fff;
+      cursor: pointer;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.02) 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+      will-change: transform;
+    }
+
+    .btn-liquid:hover {
+      transform: translate3d(0, -4px, 0) scale(1.02);
+      border-color: rgba(255, 255, 255, 0.55);
+      box-shadow: 0 22px 45px rgba(255, 0, 51, 0.28), inset 0 1px 2px rgba(255, 255, 255, 0.7);
+    }
+
+    .btn-liquid.primary {
+      background: linear-gradient(135deg, rgba(255, 0, 51, 0.6) 0%, rgba(180, 0, 36, 0.35) 100%);
+      border-color: rgba(255, 90, 110, 0.6);
+    }
+
+    .btn-liquid.tg-btn {
+      background: linear-gradient(135deg, rgba(0, 136, 204, 0.35) 0%, rgba(0, 136, 204, 0.1) 100%);
+      border-color: rgba(41, 182, 246, 0.4);
+    }
+
+    .btn-liquid .btn-icon-img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    /* Showcase Stories Feed */
+    .showcase-section {
+      display: flex;
+      flex-direction: column;
+      gap: 70px;
+      margin: 40px 0 100px;
+    }
+
+    .story-card {
+      display: grid;
+      grid-template-columns: minmax(280px, 420px) 1fr;
+      gap: 48px;
+      align-items: center;
+      padding: 40px 48px;
+    }
+
+    .story-card.reverse {
+      grid-template-columns: 1fr minmax(280px, 420px);
+    }
+
+    .story-card.reverse .story-image-wrap {
+      order: 2;
+    }
+
+    .story-card.reverse .story-content-wrap {
+      order: 1;
+    }
+
+    /* UNBOXED Transparent PNG Phone Mockup Display */
+    .story-image-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      overflow: visible;
+      position: relative;
+    }
+
+    .story-image-wrap img {
+      width: auto;
+      max-width: 100%;
+      height: auto;
+      max-height: 640px;
+      display: block;
+      object-fit: contain;
+      opacity: 0;
+      transform: translate3d(0, 15px, 0) scale(0.97);
+      filter: drop-shadow(0 25px 35px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 20px rgba(255, 0, 51, 0.18));
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+      will-change: opacity, transform;
+    }
+
+    .story-image-wrap img.loaded {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    .story-image-wrap img:hover {
+      transform: translate3d(0, -6px, 0) scale(1.02);
+      filter: drop-shadow(0 30px 45px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 30px rgba(255, 0, 51, 0.35));
+    }
+
+    .story-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #ff4757;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .story-title {
+      font-size: clamp(24px, 3vw, 36px);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 18px;
+      color: #fff;
+    }
+
+    .story-desc {
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--text-dim);
+    }
+
+    /* Graphics Spec Grid */
+    .specs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px;
+      margin-bottom: 100px;
+    }
+
+    .spec-box {
+      padding: 34px 28px;
+      text-align: center;
+    }
+
+    .spec-box:hover {
+      transform: translate3d(0, -8px, 0);
+    }
+
+    .spec-icon-circle {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 20px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      color: #ff4757;
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4);
+    }
+
+    .spec-box h3 {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .spec-box p {
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    /* Warning Notice Card */
+    .warning-section {
+      margin-bottom: 70px;
+    }
+
+    .warning-card {
+      padding: 40px;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(0, 0, 0, 0.4) 100%);
+      display: flex;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .warning-icon {
+      font-size: 48px;
+      color: #f59e0b;
+      filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.5));
+      flex-shrink: 0;
+    }
+
+    .warning-card h3 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fbbf24;
+      margin-bottom: 10px;
+    }
+
+    .warning-card p {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #e2e8f0;
+    }
+
+    /* ========================================================
+       PERMANENT 1-CLICK DOWNLOAD SECTION (Guaranteed Working)
+       ======================================================== */
+    .download-section-hub {
+      margin-bottom: 80px;
+      text-align: center;
+      scroll-margin-top: 50px;
+    }
+
+    .download-hub-card {
+      padding: 50px 40px;
+      max-width: 900px;
+      margin: 0 auto;
+      border: 1px solid rgba(255, 0, 51, 0.4);
+      background: linear-gradient(135deg, rgba(255, 0, 51, 0.08) 0%, rgba(15, 18, 25, 0.8) 100%);
+      box-shadow: 0 25px 60px rgba(255, 0, 51, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+    }
+
+    .download-hub-card h2 {
+      font-size: clamp(26px, 3.5vw, 38px);
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+
+    .download-hub-card h2 span {
+      color: #ff4757;
+    }
+
+    .download-hub-subtitle {
+      font-size: 15px;
+      color: var(--text-dim);
+      max-width: 650px;
+      margin: 0 auto 36px;
+      line-height: 1.6;
+    }
+
+    .download-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      text-align: left;
+    }
+
+    .download-action-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 30px 26px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      text-decoration: none;
+      color: #fff;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .download-action-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .download-action-card.yt-card {
+      border-color: rgba(255, 0, 51, 0.4);
+    }
+    .download-action-card.yt-card:hover {
+      border-color: rgba(255, 0, 51, 0.8);
+      box-shadow: 0 20px 45px rgba(255, 0, 51, 0.35);
+    }
+
+    .download-action-card.microg-card {
+      border-color: rgba(245, 158, 11, 0.4);
+    }
+    .download-action-card.microg-card:hover {
+      border-color: rgba(245, 158, 11, 0.8);
+      box-shadow: 0 20px 45px rgba(245, 158, 11, 0.35);
+    }
+
+    .download-card-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .download-card-header i {
+      font-size: 38px;
+    }
+
+    .download-card-header .title-wrap strong {
+      display: block;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .download-card-header .title-wrap span {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .download-card-body {
+      font-size: 14px;
+      color: #cbd5e1;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .download-card-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 24px;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 800;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      transition: all 0.3s ease;
+    }
+
+    .download-action-card:hover .download-card-btn {
+      background: #fff;
+      color: #000;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    }
+
+    /* Developer Statement */
+    .dev-section {
+      margin-bottom: 80px;
+    }
+
+    .dev-card {
+      padding: 44px;
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .dev-card h2 {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 18px;
+      background: linear-gradient(90deg, #fff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .dev-card p {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 60px 0 40px;
+      text-align: center;
+      position: relative;
+    }
+
+    .footer-brand {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .footer-sub {
+      font-size: 13px;
+      color: #ff4757;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-bottom: 18px;
+    }
+
+    .footer-meta {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .footer-meta a {
+      color: #cbd5e1;
+      text-decoration: none;
+      border-bottom: 1px dotted #94a3b8;
+    }
+
+    .builder-sign {
+      display: inline-block;
+      padding: 10px 24px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    @media (max-width: 900px) {
+      .story-card, .story-card.reverse {
+        grid-template-columns: 1fr;
+        gap: 28px;
+        padding: 32px 24px;
+      }
+      .story-card.reverse .story-image-wrap {
+        order: 1;
+      }
+      .story-card.reverse .story-content-wrap {
+        order: 2;
+      }
+      .story-image-wrap img {
+        max-height: 480px;
+      }
+      .warning-card {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background 60FPS Fluid Liquid Engine -->
+  <canvas id="liquid-canvas"></canvas>
+  <div class="ambient-glow"></div>
+
+  <!-- Header Nav -->
+  <header class="container">
+    <nav class="liquid-glass nav-container lazy-reveal">
+      <a href="#" class="brand-logo-wrapper">
+        <i class="fa-brands fa-youtube yt-icon-logo"></i>
+        <div class="brand-names">
+          <span class="yt-title">YouTube</span>
+          <span class="yt-premium-badge">PREMIUM</span>
+        </div>
+      </a>
+      <div class="style-pill" id="styleIndicator">
+        <span class="style-dot"></span>
+        <span id="styleName">Fluid Style: 1/7</span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <main class="container">
+    <section class="hero lazy-reveal">
+      <div class="liquid-glass hero-badge">
+        <i class="fa-solid fa-shield-halved" style="color: #ff4757;"></i> Neptune V1 Injection
+      </div>
+      <h1>YouTube <span>Premium</span></h1>
+      <p class="hero-slogan">
+        A App That's Build For Her Who Hates Advertisement
+      </p>
+
+      <div class="hero-cta-group">
+        <!-- Direct 1-Click Smooth Scroll to Download Hub -->
+        <a href="#downloadHub" class="btn-liquid primary">
+          <i class="fa-solid fa-cloud-arrow-down"></i> Download APKs
+        </a>
+        <a href="https://t.me/onepersongalaxy" target="_blank" class="btn-liquid tg-btn">
+          <img src="https://onepersongalaxy.github.io/NEPTUNE/opg.png" alt="Telegram" class="btn-icon-img" loading="lazy" decoding="async" onload="this.classList.add('loaded')" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg'">
+          Join Telegram Channel
+        </a>
+      </div>
+    </section>
+
+    <!-- Showcase Stories Feed with Unboxed Mockups -->
+    <section class="showcase-section">
+      
+      <!-- Story 1: Homepage -->
+      <article class="liquid-glass story-card lazy-reveal">
+        <div class="story-image-wrap">
+          <img src="https://onepersongalaxy.github.io/NEPTUNE/youtube_home.png" alt="Homepage Mockup" loading="lazy" decoding="async" onload="this.classList.add('loaded')" />
+        </div>
+        <div class="story-content-wrap">
+          <div class="story-tag"><i class="fa-solid fa-sparkles"></i> 01 / Feed</div>
+          <h2 class="story-title">Homepage</h2>
+          <p class="story-desc">
+            A Homepage That Every Soul Wants 😋 YouTube Premium Logo At Top Left Corner , A Clean Feed Without Any Rubbish Advertisment Pure Feeling Offs ! I Love It 🥰
+          </p>
+        </div>
+      </article>
+
+      <!-- Story 2: Customization -->
+      <article class="liquid-glass story-card reverse lazy-reveal">
+        <div class="story-image-wrap">
+          <img src="https://onepersongalaxy.github.io/NEPTUNE/customization.png" alt="Customization Mockup" loading="lazy" decoding="async" onload="this.classList.add('loaded')" />
+        </div>
+        <div class="story-content-wrap">
+          <div class="story-tag"><i class="fa-solid fa-sliders"></i> 02 / Control</div>
+          <h2 class="story-title">Customization</h2>
+          <p class="story-desc">
+            Customize Your App From The Logo To The Backbone Of App, You Can Customize Every Components Every Feature, Every Button, Every Animation, Your Apps Mean Your Apps.
+          </p>
+        </div>
+      </article>
+
+      <!-- Story 3: PiP -->
+      <article class="liquid-glass story-card lazy-reveal">
+        <div class="story-image-wrap">
+          <img src="https://onepersongalaxy.github.io/NEPTUNE/pip.png" alt="Picture In Picture Mockup" loading="lazy" decoding="async" onload="this.classList.add('loaded')" />
+        </div>
+        <div class="story-content-wrap">
+          <div class="story-tag"><i class="fa-solid fa-clone"></i> 03 / Multi-task</div>
+          <h2 class="story-title">Picture In Picture</h2>
+          <p class="story-desc">
+            Watch Your Favorite YouTube Video While Chatting With Your Girlfriend 😂 An App That Made For Fun , Multitasking At The Top , That's Why YouTube Premium Every One Likes
+          </p>
+        </div>
+      </article>
+
+      <!-- Story 4: SponsorBlock -->
+      <article class="liquid-glass story-card reverse lazy-reveal">
+        <div class="story-image-wrap">
+          <img src="https://onepersongalaxy.github.io/NEPTUNE/sponsorblock.png" alt="Sponsor Block Mockup" loading="lazy" decoding="async" onload="this.classList.add('loaded')" />
+        </div>
+        <div class="story-content-wrap">
+          <div class="story-tag"><i class="fa-solid fa-forward-fast"></i> 04 / Auto Skip</div>
+          <h2 class="story-title">Sponsor Block</h2>
+          <p class="story-desc">
+            You Cannot Skip Only Ads , Even The Sponsor Time When Your Favorite YouTuber Is Sponsoring Any Product, Skips The Duration Time Automatically, LOl 😂 Man We Are YouTube Premium User We Hates Advertisement
+          </p>
+        </div>
+      </article>
+
+      <!-- Story 5: Brightness -->
+      <article class="liquid-glass story-card lazy-reveal">
+        <div class="story-image-wrap">
+          <img src="https://onepersongalaxy.github.io/NEPTUNE/swipe_brightness_control.png" alt="Brightness Control Mockup" loading="lazy" decoding="async" onload="this.classList.add('loaded')" />
+        </div>
+        <div class="story-content-wrap">
+          <div class="story-tag"><i class="fa-solid fa-sun"></i> 05 / Gestures</div>
+          <h2 class="story-title">Brightness Control</h2>
+          <p class="story-desc">
+            Control Your Screen Brightness While Watching Your YouTube Video Only By Just Swiping Man It's YouTube Premium Power
+          </p>
+        </div>
+      </article>
+
+      <!-- Story 6: Volume -->
+      <article class="liquid-glass story-card reverse lazy-reveal">
+        <div class="story-image-wrap">
+          <img src="https://onepersongalaxy.github.io/NEPTUNE/swipe_volume_control.png" alt="Volume Control Mockup" loading="lazy" decoding="async" onload="this.classList.add('loaded')" />
+        </div>
+        <div class="story-content-wrap">
+          <div class="story-tag"><i class="fa-solid fa-volume-high"></i> 06 / Gestures</div>
+          <h2 class="story-title">Volume Control</h2>
+          <p class="story-desc">
+            Also You Can Control Your Sound Volume Only By Just Swiping.
+          </p>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- Graphic Badges Grid -->
+    <section class="specs-grid">
+      <div class="liquid-glass spec-box lazy-reveal">
+        <div class="spec-icon-circle"><i class="fa-solid fa-user-secret"></i></div>
+        <h3>No Tracking</h3>
+        <p>100% private. Complete user anonymity.</p>
+      </div>
+
+      <div class="liquid-glass spec-box lazy-reveal">
+        <div class="spec-icon-circle"><i class="fa-solid fa-tv"></i></div>
+        <h3>8K Ultra HD Built In Build</h3>
+        <p>Unlocked ultra-crisp resolution presets with HDR.</p>
+      </div>
+
+      <div class="liquid-glass spec-box lazy-reveal">
+        <div class="spec-icon-circle"><i class="fa-solid fa-microchip"></i></div>
+        <h3>Works Even On 4GB Ram</h3>
+        <p>Highly optimized memory footprint for fluid playback.</p>
+      </div>
+
+      <div class="liquid-glass spec-box lazy-reveal">
+        <div class="spec-icon-circle"><i class="fa-solid fa-hand-peace"></i></div>
+        <h3>Say Bye To Google</h3>
+        <p>MicroG standalone link without heavy services.</p>
+      </div>
+    </section>
+
+    <!-- Warning Card -->
+    <section class="warning-section">
+      <div class="liquid-glass warning-card lazy-reveal">
+        <i class="fa-solid fa-triangle-exclamation warning-icon"></i>
+        <div>
+          <h3>Warning: Essential Installation Step</h3>
+          <p>
+            Dear User To Use YouTube Premium You Need 2 Application 1 One is YouTube Premium And 2nd One Is Micro G ( Microg Is A Took That's Help You To Sign In On YouTube Premium Using Your Google Account So Download Two Apps , YouTube Premium Won't Work Without Micro G Tap On Download Button For Download.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DIRECT DOWNLOAD SECTION (Clickable from Everywhere) -->
+    <section class="download-section-hub" id="downloadHub">
+      <div class="liquid-glass download-hub-card lazy-reveal">
+        <i class="fa-solid fa-cloud-arrow-down" style="font-size: 42px; color: #ff4757; margin-bottom: 16px;"></i>
+        <h2>Download <span>YouTube Premium</span></h2>
+        <p class="download-hub-subtitle">
+          Both applications are required. Install <b>Micro G first</b>, then install <b>YouTube Premium</b> to enable seamless account sign-in.
+        </p>
+
+        <div class="download-cards-grid">
+          <!-- YouTube Premium APK Direct Download -->
+          <a href="https://github.com/onepersongalaxy/NEPTUNE/releases/download/Neptune_V1/youtube_premium_build_1.apk" class="download-action-card yt-card" target="_blank" download>
+            <div>
+              <div class="download-card-header">
+                <i class="fa-brands fa-youtube" style="color: #ff0033;"></i>
+                <div class="title-wrap">
+                  <strong>YouTube Premium</strong>
+                  <span>Neptune Build 1 • Main APK</span>
+                </div>
+              </div>
+              <p class="download-card-body">
+                The ad-free, picture-in-picture, ultra-customizable client with sponsor-skip unlocked.
+              </p>
+            </div>
+            <div class="download-card-btn">
+              <i class="fa-solid fa-download"></i> Download App (APK)
+            </div>
+          </a>
+
+          <!-- Micro G APK Direct Download -->
+          <a href="https://github.com/onepersongalaxy/NEPTUNE/releases/download/Neptune_V1/microg-6.1.4.apk" class="download-action-card microg-card" target="_blank" download>
+            <div>
+              <div class="download-card-header">
+                <i class="fa-solid fa-shield-halved" style="color: #f59e0b;"></i>
+                <div class="title-wrap">
+                  <strong>Micro G Helper</strong>
+                  <span>Version 6.1.4 • Core Sign-in</span>
+                </div>
+              </div>
+              <p class="download-card-body">
+                Required authentication framework allowing safe Google Account sign-in.
+              </p>
+            </div>
+            <div class="download-card-btn">
+              <i class="fa-solid fa-download"></i> Download Micro G (APK)
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Developer Information -->
+    <section class="dev-section">
+      <div class="liquid-glass dev-card lazy-reveal">
+        <i class="fa-solid fa-code" style="font-size: 32px; color: #ff4757; margin-bottom: 16px;"></i>
+        <h2>Developer Information</h2>
+        <p>
+          YouTube Premium - An Open Source Project That Made For Fun And With Privacy. We Don't Track Anything Every Application Are Regularly Check Via VirusTotal To Ensure Our User A Pure Experience. And Also Remember It's A Open Source Project That Only Made For Fun And Entertainment, So Please If You Have Ability To Purchase YouTube Premium, Please Kindly Purchased From The Original Source.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container lazy-reveal">
+      <div class="footer-brand">One Person Galaxy ™</div>
+      <div class="footer-sub">Neptune ™ Injected</div>
+      <div class="footer-meta">
+        Copyright <span id="copyrightYear"></span> • <a href="mailto:onepersongalaxy@gmail.com">onepersongalaxy@gmail.com</a>
+      </div>
+      <div>
+        <div class="builder-sign">Builded By L O N L Y - R A K I B</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 60FPS Fluid Loop & Intersection Observer Script -->
+  <script>
+    // Set dynamic copyright year [2026]
+    document.getElementById('copyrightYear').textContent = new Date().getFullYear();
+
+    /* ========================================================
+       1. INTERSECTION OBSERVER COMPONENT LAZY-LOADING
+       ======================================================== */
+    const lazyObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      root: null,
+      threshold: 0.05,
+      rootMargin: "0px 0px 100px 0px"
+    });
+
+    document.querySelectorAll('.lazy-reveal').forEach(el => lazyObserver.observe(el));
+
+    /* ========================================================
+       2. LOCKED 60FPS FLUID CANVAS ENGINE
+       ======================================================== */
+    const canvas = document.getElementById('liquid-canvas');
+    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+
+    const FLUID_STYLES = [
+      { name: "1. Crimson Deep Magma", colors: ["#ff0033", "#7a0019", "#3b000c", "#ff4b72"] },
+      { name: "2. Liquid Neptune Aurora", colors: ["#0052d4", "#4364f7", "#6fb1fc", "#ff0055"] },
+      { name: "3. Cyber Void Wave", colors: ["#8a2be2", "#41006f", "#ff0055", "#0f0c29"] },
+      { name: "4. Bio-Luminescent Deep", colors: ["#00f2fe", "#4facfe", "#000c40", "#ff0844"] },
+      { name: "5. Solar Flare Plasma", colors: ["#f12711", "#f5af19", "#800020", "#ff2a6d"] },
+      { name: "6. Emerald Liquid Glass", colors: ["#0ba360", "#3cba92", "#051937", "#a8ff78"] },
+      { name: "7. Dark Matter Vortex", colors: ["#200122", "#6f0000", "#ff0033", "#000000"] }
+    ];
+
+    const currentStyleIndex = Math.floor(Math.random() * FLUID_STYLES.length);
+    const activeStyle = FLUID_STYLES[currentStyleIndex];
+    document.getElementById('styleName').textContent = activeStyle.name;
+
+    let width, height;
+    function resizeCanvas() {
+      width = canvas.width = Math.max(180, Math.floor(window.innerWidth / 4));
+      height = canvas.height = Math.max(180, Math.floor(window.innerHeight / 4));
+    }
+    window.addEventListener('resize', resizeCanvas, { passive: true });
+    resizeCanvas();
+
+    class FluidOrb {
+      constructor(color) {
+        this.color = color;
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.radius = (Math.random() * 50 + 60);
+        this.vx = (Math.random() - 0.5) * 0.9;
+        this.vy = (Math.random() - 0.5) * 0.9;
+        this.angle = Math.random() * Math.PI * 2;
+        this.speed = 0.015 + Math.random() * 0.02;
+      }
+
+      update(dt) {
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        this.angle += this.speed * dt;
+
+        if (this.x < -40) this.x = width + 40;
+        if (this.x > width + 40) this.x = -40;
+        if (this.y < -40) this.y = height + 40;
+        if (this.y > height + 40) this.y = -40;
+      }
+
+      draw() {
+        const dynamicRadius = this.radius + Math.sin(this.angle) * 15;
+        const grad = ctx.createRadialGradient(
+          this.x, this.y, 0,
+          this.x, this.y, Math.max(1, dynamicRadius)
+        );
+        grad.addColorStop(0, this.color);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, Math.max(1, dynamicRadius), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    const orbs = activeStyle.colors.map(col => new FluidOrb(col));
+
+    let lastTime = performance.now();
+    function renderLoop(now) {
+      const delta = Math.min((now - lastTime) / 16.667, 2.0);
+      lastTime = now;
+
+      ctx.fillStyle = '#05060b';
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.globalCompositeOperation = 'screen';
+      for (let i = 0; i < orbs.length; i++) {
+        orbs[i].update(delta);
+        orbs[i].draw();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+
+      requestAnimationFrame(renderLoop);
+    }
+    requestAnimationFrame(renderLoop);
+
+    /* ========================================================
+       3. RAF-THROTTLED 3D GLASS TILT
+       ======================================================== */
+    const glassCards = document.querySelectorAll('.liquid-glass');
+    glassCards.forEach(card => {
+      let isTicking = false;
+      let targetX = 0, targetY = 0;
+
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        targetX = (e.clientX - rect.left - rect.width / 2) * -0.025;
+        targetY = (e.clientY - rect.top - rect.height / 2) * -0.025;
+
+        if (!isTicking) {
+          requestAnimationFrame(() => {
+            card.style.transform = `perspective(1000px) rotateX(${targetY}deg) rotateY(${-targetX}deg) translate3d(0, -2px, 0)`;
+            isTicking = false;
+          });
+          isTicking = true;
+        }
+      }, { passive: true });
+
+      card.addEventListener('mouseleave', () => {
+        requestAnimationFrame(() => {
+          card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translate3d(0, 0, 0)';
+        });
+      }, { passive: true });
+    });
+  </script>
+</body>
+</html>
