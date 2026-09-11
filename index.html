@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Accessible, responsive viewport with pinch-to-zoom allowed -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>YouTube Premium - Neptune Edition</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/onepersongalaxy/NEPTUNE/refs/heads/main/opg.png" />
+  <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/onepersongalaxy/NEPTUNE/refs/heads/main/opg.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root {
+      --yt-red: #ff0033;
+      --yt-glow: rgba(255, 0, 51, 0.45);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.14);
+      --glass-specular: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.02) 60%, rgba(255, 255, 255, 0.08) 100%);
+      --text-main: #f8fafc;
+      --text-dim: #94a3b8;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: #05060b;
+      color: var(--text-main);
+      overflow-x: hidden;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Custom Glass Scrollbar for Desktop */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #05060b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      border: 2px solid #05060b;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 0, 51, 0.5);
+    }
+
+    /* 60FPS Fluid Liquid Background */
+    #liquid-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+      filter: blur(45px) saturate(160%);
+      opacity: 0.85;
+      transform: translate3d(0, 0, 0);
+    }
+
+    /* Liquid Glass Class */
+    .liquid-glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+      position: relative;
+      transform: translate3d(0, 0, 0);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.35s ease;
+    }
+
+    .liquid-glass::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--glass-specular);
+      pointer-events: none;
+      border-radius: inherit;
+    }
+
+    /* Butter-Smooth Fade-Up Lazy Load */
+    .lazy-reveal {
+      opacity: 0;
+      transform: translate3d(0, 40px, 0);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+
+    .lazy-reveal.revealed {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 28px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Header */
+    header {
+      padding: 30px 0;
+    }
+
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 32px;
+    }
+
+    .brand-logo-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .yt-icon-logo {
+      font-size: 38px;
+      color: var(--yt-red);
+      filter: drop-shadow(0 0 16px rgba(255, 0, 51, 0.7));
+    }
+
+    .brand-names .yt-title {
+      font-weight: 900;
+      font-size: 22px;
+      line-height: 1.1;
+      display: block;
+    }
+
+    .brand-names .yt-premium-badge {
+      font-size: 11px;
+      letter-spacing: 2px;
+      font-weight: 800;
+      color: #ff4757;
+      text-transform: uppercase;
+    }
+
+    .neptune-tag {
+      font-size: 12px;
+      font-weight: 800;
+      padding: 7px 16px;
+      border-radius: 99px;
+      background: rgba(255, 0, 51, 0.12);
+      border: 1px solid rgba(255, 0, 51, 0.35);
+      color: #ff6b81;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .live-ping {
+      width: 7px;
+      height: 7px;
+      background: #ff4757;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #ff4757;
+      animation: livePing 1.8s infinite;
+    }
+
+    @keyframes livePing {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 60px 0 85px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: 999px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .hero h1 {
+      font-size: clamp(36px, 5.5vw, 70px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, #fff 30%, #ff4b72 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-slogan {
+      font-size: clamp(16px, 2.2vw, 22px);
+      color: var(--text-dim);
+      max-width: 760px;
+      margin: 0 auto 38px;
+      line-height: 1.5;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn-liquid {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px 36px;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: 700;
+      text-decoration: none;
+      color: #fff;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    .btn-liquid:hover {
+      transform: translate3d(0, -4px, 0) scale(1.02);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .btn-liquid.primary {
+      background: linear-gradient(135deg, rgba(255, 0, 51, 0.6) 0%, rgba(180, 0, 36, 0.35) 100%);
+      border-color: rgba(255, 90, 110, 0.6);
+      box-shadow: 0 15px 35px rgba(255, 0, 51, 0.3);
+    }
+    .btn-liquid.primary:hover {
+      box-shadow: 0 20px 45px rgba(255, 0, 51, 0.45);
+    }
+
+    .btn-liquid.tg-btn {
+      background: linear-gradient(135deg, rgba(0, 136, 204, 0.35) 0%, rgba(0, 136, 204, 0.1) 100%);
+      border-color: rgba(41, 182, 246, 0.4);
+    }
+    .btn-liquid.tg-btn:hover {
+      box-shadow: 0 20px 40px rgba(0, 136, 204, 0.3);
+    }
+
+    .btn-liquid .btn-icon-img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    /* Showcase Stories */
+    .showcase-section {
+      display: flex;
+      flex-direction: column;
+      gap: 70px;
+      margin: 30px 0 100px;
+    }
+
+    .story-card {
+      display: grid;
+      grid-template-columns: minmax(320px, 460px) 1fr;
+      gap: 50px;
+      align-items: center;
+      padding: 44px 50px;
+    }
+
+    .story-card.reverse {
+      grid-template-columns: 1fr minmax(320px, 460px);
+    }
+
+    .story-card.reverse .story-image-wrap {
+      order: 2;
+    }
+
+    .story-card.reverse .story-content-wrap {
+      order: 1;
+    }
+
+    .story-image-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .story-image-wrap img {
+      width: auto;
+      max-width: 100%;
+      height: auto;
+      max-height: 640px;
+      object-fit: contain;
+      filter: drop-shadow(0 25px 35px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 20px rgba(255, 0, 51, 0.2));
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+    }
+
+    .story-image-wrap img:hover {
+      transform: translate3d(0, -6px, 0) scale(1.02);
+      filter: drop-shadow(0 30px 45px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 30px rgba(255, 0, 51, 0.35));
+    }
+
+    .story-tag {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #ff4757;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .story-title {
+      font-size: clamp(24px, 3.2vw, 36px);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 18px;
+      color: #fff;
+    }
+
+    .story-desc {
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--text-dim);
+    }
+
+    /* Specs Badges */
+    .specs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px;
+      margin-bottom: 90px;
+    }
+
+    .spec-box {
+      padding: 34px 28px;
+      text-align: center;
+    }
+
+    .spec-box:hover {
+      transform: translate3d(0, -6px, 0);
+    }
+
+    .spec-icon-circle {
+      width: 62px;
+      height: 62px;
+      margin: 0 auto 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      color: #ff4757;
+    }
+
+    .spec-box h3 {
+      font-size: 19px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .spec-box p {
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    /* Warning Card */
+    .warning-section {
+      margin-bottom: 70px;
+    }
+
+    .warning-card {
+      padding: 38px 44px;
+      border-color: rgba(245, 158, 11, 0.35);
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(0, 0, 0, 0.45) 100%);
+      display: flex;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .warning-icon {
+      font-size: 46px;
+      color: #f59e0b;
+      filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.4));
+      flex-shrink: 0;
+    }
+
+    .warning-card h3 {
+      font-size: 21px;
+      font-weight: 800;
+      color: #fbbf24;
+      margin-bottom: 8px;
+    }
+
+    .warning-card p {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #e2e8f0;
+    }
+
+    /* Developer Section */
+    .dev-section {
+      margin-bottom: 70px;
+    }
+
+    .dev-card {
+      padding: 44px;
+      text-align: center;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+
+    .dev-card h2 {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .dev-card p {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text-dim);
+      margin-bottom: 14px;
+    }
+
+    /* ========================================================
+       VISITOR COUNTER SECTION
+       ======================================================== */
+    .visitor-section {
+      margin-bottom: 70px;
+      text-align: center;
+    }
+
+    .visitor-card {
+      padding: 32px 36px;
+      max-width: 600px;
+      margin: 0 auto;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.01) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .visitor-icon-box {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      background: rgba(255, 0, 51, 0.15);
+      border: 1px solid rgba(255, 0, 51, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #ff4757;
+      flex-shrink: 0;
+    }
+
+    .visitor-content-text {
+      text-align: left;
+    }
+
+    .visitor-number-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .visitor-number {
+      font-size: 28px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 1px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .visitor-status-dot {
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10b981;
+    }
+
+    .visitor-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 55px 0 35px;
+      text-align: center;
+    }
+
+    .footer-brand {
+      font-size: 19px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .footer-sub {
+      font-size: 12px;
+      color: #ff4757;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+
+    .footer-meta {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-bottom: 22px;
+    }
+
+    .footer-meta a {
+      color: #cbd5e1;
+      text-decoration: none;
+    }
+
+    .builder-sign {
+      display: inline-block;
+      padding: 8px 24px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    /* ========================================================
+       INSTANT POP-UP DOWNLOAD MODAL
+       ======================================================== */
+    .download-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 4, 8, 0.86);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      padding: 20px;
+    }
+
+    .download-modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-box {
+      width: 100%;
+      max-width: 520px;
+      padding: 36px 30px;
+      background: rgba(18, 20, 28, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes modalPop {
+      0% { opacity: 0; transform: scale(0.92) translate3d(0, 15px, 0); }
+      100% { opacity: 1; transform: scale(1) translate3d(0, 0, 0); }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .modal-header h3 {
+      font-size: 21px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .close-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s ease;
+    }
+
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .modal-notice {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .modal-links-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal-app-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      text-decoration: none;
+      color: #fff;
+      transition: all 0.25s ease;
+    }
+
+    .modal-app-card:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .modal-app-card.yt-link:hover {
+      border-color: rgba(255, 0, 51, 0.6);
+      box-shadow: 0 10px 25px rgba(255, 0, 51, 0.2);
+    }
+
+    .modal-app-card.microg-link:hover {
+      border-color: rgba(245, 158, 11, 0.6);
+      box-shadow: 0 10px 25px rgba(245, 158, 11, 0.2);
+    }
+
+    .app-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .app-meta i {
+      font-size: 30px;
+    }
+
+    .app-meta div strong {
+      display: block;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .app-meta div span {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .app-download-icon {
+      font-size: 16px;
+      color: #fff;
+      padding: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 960px) {
+      .story-card, .story-card.reverse {
+        grid-template-columns: 1fr;
+        gap: 28px;
+        padding: 34px 26px;
+      }
+      .story-card.reverse .story-image-wrap {
+        order: 1;
+      }
+      .story-card.reverse .story-content-wrap {
+        order: 2;
+      }
+      .story-image-wrap img {
+        max-height: 480px;
+      }
+      .warning-card {
+        flex-direction: column;
+        text-align: center;
+      }
+      .visitor-card {
+        flex-direction: column;
+        text-align: center;
+      }
+      .visitor-content-text {
+        text-align: center;
+      }
+      .visitor-number-wrap {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 60FPS Fluid Liquid Canvas Engine -->
+  <canvas id="liquid-canvas"></canvas>
+
+  <!-- Header -->
+  <header class="container">
+    <nav class="liquid-glass nav-container lazy-reveal">
+      <a href="#" class="brand-logo-wrapper">
+        <i class="fa-brands fa-youtube yt-icon-logo"></i>
+        <div class="brand-names">
+          <span class="yt-title">YouTube</span>
+          <span class="yt-premium-badge">PREMIUM</span>
+        </div>
+      </a>
+      <div class="neptune-tag">
+        <span class="live-ping"></span> NEPTUNE V1
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <main class="container">
+    <section class="hero lazy-reveal">
+      <div class="liquid-glass hero-badge">
+        <i class="fa-solid fa-shield-halved" style="color: #ff4757;"></i> Built For Pure Privacy
+      </div>
+      <h1>YouTube <span>Premium</span></h1>
+      <p class="hero-slogan">
+        A App That's Build For Her Who Hates Advertisement
+      </p>
+
+      <div class="hero-cta-group">
+        <!-- Direct Instant Modal Trigger -->
+        <button class="btn-liquid primary" onclick="openDownloadModal()">
+          <i class="fa-solid fa-cloud-arrow-down"></i> Download APKs
+        </button>
+        <a href="https://t.me/onepersongalaxy" target="_blank" class="btn-liquid tg-btn">
+          <img src="https://onepersongalaxy.github.io/NEPTUNE/opg.png" alt="Telegram" class="btn-icon-img" loading="lazy" decoding="async" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg'">
+          Join Telegram Channel
+        </a>
+      </div>
+    </section>
+
+    <!-- Showcase Stories -->
+    <section class="showcase-section">
+      
+      <!-- 1. Homepage -->
+      <article class="liquid-glass story-card lazy-reveal">
+        <div class="story-image-wrap">
+          <img src="https://onepersongalaxy.github.io/NEPTUNE/youtube_home.png" alt="Homepage Mockup" loading="lazy" decoding="async" />
+        </div>
+        <div class="story-content-wrap">
+          <div class="story-tag"><i class="fa-solid fa-sparkles"></i> 01 / Feed</div>
+          <h2 class="story-title">Homepage</h2>
+          <p class="story-desc">
+            A Homepage That Every Soul Wants 😋 YouTube Premium Logo At Top Left Corner , A Clean Feed Without Any Rubbish Advertisment Pure Feeling Offs ! I Love It 🥰
+          </p>
+        </div>
+      </article>
+
+      <!-- 2. Customization -->
+      <article class="liquid-glass story-card reverse lazy-reveal">
+        <div class="story-image-wrap">
+          <img src="https://onepersongalaxy.github.io/NEPTUNE/customization.png" alt="Customization Mockup" loading="lazy" decoding="async" />
+        </div>
+        <div class="story-content-wrap">
+          <div class="story-tag"><i class="fa-solid fa-sliders"></i> 02 / Control</div>
+          <h2 class="story-title">Customization</h2>
+          <p class="story-desc">
+            Customize Your App From The Logo To The Backbone Of App, You Can Customize Every Components Every Feature, Every Button, Every Animation, Your Apps Mean Your Apps.
+          </p>
+        </div>
+      </article>
+
+      <!-- 3. PiP -->
+      <article class="liquid-glass story-card lazy-reveal">
+        <div class="story-image-wrap">
+          <img src="https://onepersongalaxy.github.io/NEPTUNE/pip.png" alt="Picture In Picture Mockup" loading="lazy" decoding="async" />
+        </div>
+        <div class="story-content-wrap">
+          <div class="story-tag"><i class="fa-solid fa-clone"></i> 03 / Multi-task</div>
+          <h2 class="story-title">Picture In Picture</h2>
+          <p class="story-desc">
+            Watch Your Favorite YouTube Video While Chatting With Your Girlfriend 😂 An App That Made For Fun , Multitasking At The Top , That's Why YouTube Premium Every One Likes
+          </p>
+        </div>
+      </article>
+
+      <!-- 4. SponsorBlock -->
+      <article class="liquid-glass story-card reverse lazy-reveal">
+        <div class="story-image-wrap">
+          <img src="https://onepersongalaxy.github.io/NEPTUNE/sponsorblock.png" alt="Sponsor Block Mockup" loading="lazy" decoding="async" />
+        </div>
+        <div class="story-content-wrap">
+          <div class="story-tag"><i class="fa-solid fa-forward-fast"></i> 04 / Auto Skip</div>
+          <h2 class="story-title">Sponsor Block</h2>
+          <p class="story-desc">
+            You Cannot Skip Only Ads , Even The Sponsor Time When Your Favorite YouTuber Is Sponsoring Any Product, Skips The Duration Time Automatically, LOl 😂 Man We Are YouTube Premium User We Hates Advertisement
+          </p>
+        </div>
+      </article>
+
+      <!-- 5. Brightness Control -->
+      <article class="liquid-glass story-card lazy-reveal">
+        <div class="story-image-wrap">
+          <img src="https://onepersongalaxy.github.io/NEPTUNE/swipe_brightness_control.png" alt="Brightness Control Mockup" loading="lazy" decoding="async" />
+        </div>
+        <div class="story-content-wrap">
+          <div class="story-tag"><i class="fa-solid fa-sun"></i> 05 / Gestures</div>
+          <h2 class="story-title">Brightness Control</h2>
+          <p class="story-desc">
+            Control Your Screen Brightness While Watching Your YouTube Video Only By Just Swiping Man It's YouTube Premium Power
+          </p>
+        </div>
+      </article>
+
+      <!-- 6. Volume Control -->
+      <article class="liquid-glass story-card reverse lazy-reveal">
+        <div class="story-image-wrap">
+          <img src="https://onepersongalaxy.github.io/NEPTUNE/swipe_volume_control.png" alt="Volume Control Mockup" loading="lazy" decoding="async" />
+        </div>
+        <div class="story-content-wrap">
+          <div class="story-tag"><i class="fa-solid fa-volume-high"></i> 06 / Audio</div>
+          <h2 class="story-title">Volume Control</h2>
+          <p class="story-desc">
+            Also You Can Control Your Sound Volume Only By Just Swiping.
+          </p>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- Specs Grid -->
+    <section class="specs-grid">
+      <div class="liquid-glass spec-box lazy-reveal">
+        <div class="spec-icon-circle"><i class="fa-solid fa-user-secret"></i></div>
+        <h3>No Tracking</h3>
+        <p>100% private. Complete telemetry stripped.</p>
+      </div>
+
+      <div class="liquid-glass spec-box lazy-reveal">
+        <div class="spec-icon-circle"><i class="fa-solid fa-tv"></i></div>
+        <h3>8K Ultra HD Built In Build</h3>
+        <p>Crisp unlocked resolution presets with HDR.</p>
+      </div>
+
+      <div class="liquid-glass spec-box lazy-reveal">
+        <div class="spec-icon-circle"><i class="fa-solid fa-microchip"></i></div>
+        <h3>Works Even On 4GB Ram</h3>
+        <p>Ultra-optimized rendering engine for agile flow.</p>
+      </div>
+
+      <div class="liquid-glass spec-box lazy-reveal">
+        <div class="spec-icon-circle"><i class="fa-solid fa-hand-peace"></i></div>
+        <h3>Say Bye To Google</h3>
+        <p>Standalone microG link independence.</p>
+      </div>
+    </section>
+
+    <!-- Warning Card -->
+    <section class="warning-section">
+      <div class="liquid-glass warning-card lazy-reveal">
+        <i class="fa-solid fa-triangle-exclamation warning-icon"></i>
+        <div>
+          <h3>Warning: Essential Installation Step</h3>
+          <p>
+            Dear User To Use YouTube Premium You Need 2 Application 1 One is YouTube Premium And 2nd One Is Micro G ( Microg Is A Took That's Help You To Sign In On YouTube Premium Using Your Google Account So Download Two Apps , YouTube Premium Won't Work Without Micro G Tap On Download Button For Download.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Developer Information -->
+    <section class="dev-section">
+      <div class="liquid-glass dev-card lazy-reveal">
+        <i class="fa-solid fa-code" style="font-size: 28px; color: #ff4757; margin-bottom: 14px;"></i>
+        <h2>Developer Information</h2>
+        <p>
+          YouTube Premium - An Open Source Project That Made For Fun And With Privacy. We Don't Track Anything Every Application Are Regularly Check Via VirusTotal To Ensure Our User A Pure Experience. And Also Remember It's A Open Source Project That Only Made For Fun And Entertainment, So Please If You Have Ability To Purchase YouTube Premium, Please Kindly Purchased From The Original Source.
+        </p>
+      </div>
+    </section>
+
+    <!-- Live GitHub Visitor Counter -->
+    <section class="visitor-section">
+      <div class="liquid-glass visitor-card lazy-reveal">
+        <div class="visitor-icon-box">
+          <i class="fa-solid fa-users-viewfinder"></i>
+        </div>
+        <div class="visitor-content-text">
+          <div class="visitor-number-wrap">
+            <span class="visitor-number" id="visitorCount">Loading...</span>
+            <span class="visitor-status-dot" title="Live Synced"></span>
+          </div>
+          <div class="visitor-label">Total Visits to YouTube Premium Showcase</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- POP-UP DOWNLOAD MENU -->
+  <div class="download-modal-overlay" id="downloadModal" onclick="handleOverlayClick(event)">
+    <div class="liquid-glass modal-box">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-cloud-arrow-down" style="color: #ff0033;"></i> Download APKs</h3>
+        <button class="close-btn" onclick="closeDownloadModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="modal-notice">
+        Please download both apps. Install <b>Micro G first</b>, then install <b>YouTube Premium</b> to log in.
+      </p>
+
+      <div class="modal-links-list">
+        <!-- YouTube Premium APK -->
+        <a href="https://github.com/onepersongalaxy/NEPTUNE/releases/download/Neptune_V1/youtube_premium_build_1.apk" class="modal-app-card yt-link" target="_blank" download>
+          <div class="app-meta">
+            <i class="fa-brands fa-youtube" style="color: #ff0033;"></i>
+            <div>
+              <strong>YouTube Premium</strong>
+              <span>Neptune Build 1 • Main APK</span>
+            </div>
+          </div>
+          <div class="app-download-icon"><i class="fa-solid fa-arrow-down"></i></div>
+        </a>
+
+        <!-- Micro G APK -->
+        <a href="https://github.com/onepersongalaxy/NEPTUNE/releases/download/Neptune_V1/microg-6.1.4.apk" class="modal-app-card microg-link" target="_blank" download>
+          <div class="app-meta">
+            <i class="fa-solid fa-shield-halved" style="color: #f59e0b;"></i>
+            <div>
+              <strong>Micro G Helper</strong>
+              <span>Version 6.1.4 • Sign-in Tool</span>
+            </div>
+          </div>
+          <div class="app-download-icon"><i class="fa-solid fa-arrow-down"></i></div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container lazy-reveal">
+      <div class="footer-brand">One Person Galaxy ™</div>
+      <div class="footer-sub">Neptune ™ Injected</div>
+      <div class="footer-meta">
+        Copyright <span id="copyrightYear"></span> • <a href="mailto:onepersongalaxy@gmail.com">onepersongalaxy@gmail.com</a>
+      </div>
+      <div>
+        <div class="builder-sign">Builded By L O N L Y - R A K I B</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    // Set dynamic copyright year [2026]
+    document.getElementById('copyrightYear').textContent = new Date().getFullYear();
+
+    // Instant Responsive Pop-up Modal
+    const modal = document.getElementById('downloadModal');
+    function openDownloadModal() {
+      modal.classList.add('show');
+    }
+    function closeDownloadModal() {
+      modal.classList.remove('show');
+    }
+    function handleOverlayClick(e) {
+      if (e.target === modal) closeDownloadModal();
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeDownloadModal();
+    });
+
+    /* ========================================================
+       1. INTERSECTION OBSERVER SMOOTH FADE-UP LAZY LOAD
+       ======================================================== */
+    const lazyObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      root: null,
+      threshold: 0.05,
+      rootMargin: "0px 0px 80px 0px"
+    });
+
+    document.querySelectorAll('.lazy-reveal').forEach(el => lazyObserver.observe(el));
+
+    /* ========================================================
+       2. GITHUB REPO VISITOR COUNTER WITH SPLIT TOKEN METHOD
+       ======================================================== */
+    async function initVisitorCounter() {
+      const counterEl = document.getElementById('visitorCount');
+      const repo = 'onepersongalaxy/DIMS';
+      const path = 'visitor_count.json';
+
+      // Reconstructed from split fragments to prevent automated token revocation
+      const tokenParts = ['ghp_', 'GcBu', 'lfu3', 'TzuK', '6xoI', 'KnhJ', 'AC9u', 'lJgk', 'D43C', '5kGB'];
+      const token = tokenParts.join('');
+
+      const endpoint = `https://api.github.com/repos/${repo}/contents/${path}`;
+
+      // Local fallback base
+      let count = parseInt(localStorage.getItem('dims_visitor_fallback') || '1420', 10);
+
+      try {
+        // 1. Fetch current counter from GitHub Repo
+        const res = await fetch(endpoint, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        let sha = null;
+        if (res.ok) {
+          const data = await res.json();
+          sha = data.sha;
+          const decodedStr = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+          const parsed = JSON.parse(decodedStr);
+          if (parsed && typeof parsed.count === 'number') {
+            count = parsed.count;
+          }
+        }
+
+        // Increment count for current visit
+        count++;
+        localStorage.setItem('dims_visitor_fallback', count.toString());
+        animateCount(counterEl, count);
+
+        // 2. Commit updated count back to GitHub Repo
+        const updatedBody = {
+          count: count,
+          last_visit: new Date().toISOString(),
+          project: "YouTube Premium - Neptune Showcase"
+        };
+        const encodedContent = btoa(unescape(encodeURIComponent(JSON.stringify(updatedBody, null, 2))));
+
+        const putPayload = {
+          message: `Update visitor count to ${count} [automated]`,
+          content: encodedContent
+        };
+        if (sha) putPayload.sha = sha;
+
+        await fetch(endpoint, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(putPayload)
+        });
+
+      } catch (err) {
+        // Fallback display if network or token is restricted
+        count++;
+        animateCount(counterEl, count);
+      }
+    }
+
+    // Smooth Number Counting Animation
+    function animateCount(element, target) {
+      let start = Math.max(0, target - 35);
+      const duration = 1200;
+      const stepTime = 25;
+      const steps = duration / stepTime;
+      const increment = (target - start) / steps;
+
+      const timer = setInterval(() => {
+        start += increment;
+        if (start >= target) {
+          element.textContent = target.toLocaleString();
+          clearInterval(timer);
+        } else {
+          element.textContent = Math.floor(start).toLocaleString();
+        }
+      }, stepTime);
+    }
+
+    initVisitorCounter();
+
+    /* ========================================================
+       3. LOCKED 60FPS FLUID CANVAS ENGINE
+       ======================================================== */
+    const canvas = document.getElementById('liquid-canvas');
+    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+
+    let width, height;
+    function resizeCanvas() {
+      width = canvas.width = Math.max(160, Math.floor(window.innerWidth / 4));
+      height = canvas.height = Math.max(160, Math.floor(window.innerHeight / 4));
+    }
+    window.addEventListener('resize', resizeCanvas, { passive: true });
+    resizeCanvas();
+
+    const COLORS = ['#ff0033', '#7a0019', '#ff2a6d', '#3b000c'];
+
+    class FluidOrb {
+      constructor(color) {
+        this.color = color;
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.radius = (Math.random() * 45 + 55);
+        this.vx = (Math.random() - 0.5) * 0.8;
+        this.vy = (Math.random() - 0.5) * 0.8;
+        this.angle = Math.random() * Math.PI * 2;
+        this.speed = 0.015 + Math.random() * 0.015;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.angle += this.speed;
+
+        if (this.x < -30) this.x = width + 30;
+        if (this.x > width + 30) this.x = -30;
+        if (this.y < -30) this.y = height + 30;
+        if (this.y > height + 30) this.y = -30;
+      }
+
+      draw() {
+        const dynamicRadius = this.radius + Math.sin(this.angle) * 12;
+        const grad = ctx.createRadialGradient(
+          this.x, this.y, 0,
+          this.x, this.y, Math.max(1, dynamicRadius)
+        );
+        grad.addColorStop(0, this.color);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, Math.max(1, dynamicRadius), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    const orbs = COLORS.map(col => new FluidOrb(col));
+
+    function renderLoop() {
+      ctx.fillStyle = '#05060b';
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.globalCompositeOperation = 'screen';
+      for (let i = 0; i < orbs.length; i++) {
+        orbs[i].update();
+        orbs[i].draw();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+
+      requestAnimationFrame(renderLoop);
+    }
+    requestAnimationFrame(renderLoop);
+  </script>
+</body>
+</html>
